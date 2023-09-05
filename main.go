@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -29,7 +29,7 @@ func fetchAPI(url string, resultChan chan<- APIResponse) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		resultChan <- APIResponse{URL: url, Error: fmt.Sprintf("Error reading the response body: %v", err)}
 		return
@@ -41,8 +41,16 @@ func fetchAPI(url string, resultChan chan<- APIResponse) {
 
 func main() {
 	var cep string
-	fmt.Print("Digite o CEP: ")
+	fmt.Print("Enter the ZIP code: ")
 	fmt.Scan(&cep)
+
+	// Format the ZIP code if necessary
+	if len(cep) == 8 {
+		cep = fmt.Sprintf("%s-%s", cep[:5], cep[5:])
+	} else if len(cep) != 9 || cep[5] != '-' {
+		fmt.Println("Invalid ZIP code format. Please use the format 00000-000.")
+		return
+	}
 
 	apiURLs := []string{
 		"https://cdn.apicep.com/file/apicep/" + cep + ".json",
